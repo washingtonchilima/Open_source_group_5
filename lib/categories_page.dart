@@ -7,7 +7,7 @@ class CategoriesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Categories')),
-      body: const Center(child: Text('Manage your product categories here.')),
+      body: const Center(child: Text('add product categories here.')),
     );
   }
 }
