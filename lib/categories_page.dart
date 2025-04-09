@@ -9,7 +9,7 @@ class CategoriesPage extends StatefulWidget {
 
 class _CategoriesPageState extends State<CategoriesPage> {
   final TextEditingController _controller = TextEditingController();
-  final List<String> _categories = ['Groceries', 'Electronics', 'Clothing', 'Other'];
+  final List<String> _categories = ['Groceries', 'Electronics', 'Clothing', 'Others'];
 
   void _addCategory() {
     final newCategory = _controller.text.trim();
