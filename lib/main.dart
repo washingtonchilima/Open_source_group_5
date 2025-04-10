@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import 'shopping_list_page.dart';
 import 'categories_page.dart';
 import 'summary_page.dart';
 import 'settings_page.dart';
+import 'models/shopping_item.dart'; // Ensure the path matches your project structure
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+
+  // Register Hive adapters
+  Hive.registerAdapter(ShoppingItemAdapter());
+
+  // Open Hive boxes
+  await Hive.openBox<ShoppingItem>('shopping_items_box');
+  await Hive.openBox<String>('categories_box');
+
   runApp(const MyApp());
 }
 

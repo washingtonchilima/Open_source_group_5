@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../models/shopping_item.dart';
 
 class ShoppingListPage extends StatefulWidget {
   const ShoppingListPage({super.key});
@@ -8,14 +10,26 @@ class ShoppingListPage extends StatefulWidget {
 }
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
-  final List<Map<String, dynamic>> _items = [];
-  final List<String> _categories = ['Groceries', 'Electronics', 'Clothing', 'Other'];
+  late Box<ShoppingItem> _shoppingBox;
+  late Box<String> _categoryBox;
+
+  @override
+  void initState() {
+    super.initState();
+    _shoppingBox = Hive.box<ShoppingItem>('shopping_items_box');
+    _categoryBox = Hive.box<String>('categories_box');
+
+    // Optional: Ensure defaults exist if categories box is empty
+    if (_categoryBox.isEmpty) {
+      _categoryBox.addAll(['Groceries', 'Electronics', 'Clothing', 'Other']);
+    }
+  }
 
   void _showAddItemDialog() {
     String itemName = '';
     int quantity = 1;
     double price = 0.0;
-    String selectedCategory = _categories[0];
+    String selectedCategory = _categoryBox.isNotEmpty ? _categoryBox.getAt(0)! : 'Uncategorized';
 
     showDialog(
       context: context,
@@ -41,7 +55,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 ),
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
-                  items: _categories
+                  items: _categoryBox.values
                       .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                       .toList(),
                   onChanged: (value) {
@@ -60,16 +74,15 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             ElevatedButton(
               onPressed: () {
                 if (itemName.trim().isNotEmpty) {
-                  setState(() {
-                    _items.add({
-                      'name': itemName,
-                      'quantity': quantity,
-                      'price': price,
-                      'category': selectedCategory,
-                      'checked': false,
-                    });
-                  });
+                  final item = ShoppingItem(
+                    name: itemName,
+                    category: selectedCategory,
+                    quantity: quantity,
+                    price: price,
+                  );
+                  _shoppingBox.add(item);
                   Navigator.of(context).pop();
+                  setState(() {});
                 }
               },
               child: const Text('Add'),
@@ -81,35 +94,39 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   }
 
   void _deleteItem(int index) {
-    setState(() {
-      _items.removeAt(index);
-    });
+    _shoppingBox.getAt(index)?.delete();
+    setState(() {});
   }
 
   void _toggleItem(int index, bool? value) {
-    setState(() {
-      _items[index]['checked'] = value ?? false;
-    });
+    final item = _shoppingBox.getAt(index);
+    if (item != null) {
+      item.isChecked = value ?? false;
+      item.save();
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final items = _shoppingBox.values.toList();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Shopping List')),
-      body: _items.isEmpty
+      body: items.isEmpty
           ? const Center(child: Text('No items yet. Tap + to add one.'))
           : ListView.builder(
-        itemCount: _items.length,
+        itemCount: items.length,
         itemBuilder: (context, index) {
-          final item = _items[index];
+          final item = items[index];
           return ListTile(
             leading: Checkbox(
-              value: item['checked'],
+              value: item.isChecked,
               onChanged: (value) => _toggleItem(index, value),
             ),
-            title: Text(item['name']),
+            title: Text(item.name),
             subtitle: Text(
-              '${item['category']} • Qty: ${item['quantity']} • \$${item['price'].toStringAsFixed(2)}',
+              '${item.category} • Qty: ${item.quantity} • \$${item.price.toStringAsFixed(2)}',
             ),
             trailing: IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
