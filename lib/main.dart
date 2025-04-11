@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
 import 'shopping_list_page.dart';
 import 'categories_page.dart';
 import 'summary_page.dart';
 import 'settings_page.dart';
-import 'models/shopping_item.dart'; // Ensure the path matches your project structure
+import '../models/shopping_item.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

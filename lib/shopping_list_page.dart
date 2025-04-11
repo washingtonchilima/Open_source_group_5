@@ -13,6 +13,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   late Box<ShoppingItem> _shoppingBox;
   late Box<String> _categoryBox;
 
+  // Added: Controller and state for search and filter
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedFilterCategory = 'All';
+
   @override
   void initState() {
     super.initState();
@@ -23,13 +28,28 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     if (_categoryBox.isEmpty) {
       _categoryBox.addAll(['Groceries', 'Electronics', 'Clothing', 'Other']);
     }
+
+    // 🔍 Listening to changes in the search bar
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose(); // Dispose controller
+    super.dispose();
   }
 
   void _showAddItemDialog() {
     String itemName = '';
     int quantity = 1;
     double price = 0.0;
-    String selectedCategory = _categoryBox.isNotEmpty ? _categoryBox.getAt(0)! : 'Uncategorized';
+    String selectedCategory = _categoryBox.isNotEmpty
+        ? _categoryBox.getAt(0)!
+        : 'Uncategorized';
 
     showDialog(
       context: context,
@@ -107,18 +127,75 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
+  // Added: Filter logic
+  List<ShoppingItem> _filterItems(List<ShoppingItem> items) {
+    return items.where((item) {
+      final matchesSearch = item.name.toLowerCase().contains(_searchQuery);
+      final matchesCategory = _selectedFilterCategory == 'All' ||
+          item.category == _selectedFilterCategory;
+      return matchesSearch && matchesCategory;
+    }).toList();
+  } // ends here filter logic
+
   @override
   Widget build(BuildContext context) {
     final items = _shoppingBox.values.toList();
+    final filteredItems = _filterItems(items); // Use filtered list
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Shopping List')),
-      body: items.isEmpty
-          ? const Center(child: Text('No items yet. Tap + to add one.'))
+      appBar: AppBar(
+        title: const Text('Shopping List'),
+
+        // Added: Search bar and filter dropdown
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(90),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                // 🔍 Search field
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search items...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // 🧩 Category filter
+                DropdownButton<String>(
+                  value: _selectedFilterCategory,
+                  items: [
+                    const DropdownMenuItem(value: 'All', child: Text('All Categories')),
+                    ..._categoryBox.values.map((cat) =>
+                        DropdownMenuItem(value: cat, child: Text(cat))),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedFilterCategory = value;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+
+      // Use filtered list here
+      body: filteredItems.isEmpty
+          ? const Center(child: Text('No items match your search/filter.'))
           : ListView.builder(
-        itemCount: items.length,
+        itemCount: filteredItems.length,
         itemBuilder: (context, index) {
-          final item = items[index];
+          final item = filteredItems[index];
+
           return ListTile(
             leading: Checkbox(
               value: item.isChecked,
@@ -126,8 +203,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             ),
             title: Text(item.name),
             subtitle: Text(
-              '${item.category} • Qty: ${item.quantity} • \$${item.price.toStringAsFixed(2)}',
-            ),
+                '${item.category} • Qty: ${item.quantity} • \$${item.price.toStringAsFixed(2)}'),
             trailing: IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _deleteItem(index),
@@ -135,6 +211,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           );
         },
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddItemDialog,
         tooltip: 'Add Item',
