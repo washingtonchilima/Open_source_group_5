@@ -13,6 +13,75 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   late Box<ShoppingItem> _shoppingBox;
   late Box<String> _categoryBox;
 
+ //added feature for viewing the item list on tap, editing it
+  void _showEditItemDialog(ShoppingItem item) {
+    String itemName = item.name;
+    int quantity = item.quantity;
+    double price = item.price;
+    String selectedCategory = item.category;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Item'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Item Name'),
+                  controller: TextEditingController(text: itemName),
+                  onChanged: (value) => itemName = value,
+                ),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Quantity'),
+                  keyboardType: TextInputType.number,
+                  controller: TextEditingController(text: quantity.toString()),
+                  onChanged: (value) => quantity = int.tryParse(value) ?? 1,
+                ),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Price'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  controller: TextEditingController(text: price.toStringAsFixed(2)),
+                  onChanged: (value) => price = double.tryParse(value) ?? 0.0,
+                ),
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  items: _categoryBox.values
+                      .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) selectedCategory = value;
+                  },
+                  decoration: const InputDecoration(labelText: 'Category'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                item.name = itemName;
+                item.quantity = quantity;
+                item.price = price;
+                item.category = selectedCategory;
+                item.save(); // Save changes to Hive
+                Navigator.of(context).pop();
+                setState(() {});
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  } //feature for view and edit ends here
+
+
   // Added: Controller and state for search and filter
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -196,21 +265,26 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         itemBuilder: (context, index) {
           final item = filteredItems[index];
 
+         // changed this part and wrapped code in listtile
+          // and used ontap property for showedititem function
+
           return ListTile(
+            onTap: () => _showEditItemDialog(item),
             leading: Checkbox(
               value: item.isChecked,
-              onChanged: (value) => _toggleItem(index, value),
+              onChanged: (value) => _toggleItem(_shoppingBox.values.toList().indexOf(item), value),
             ),
             title: Text(item.name),
             subtitle: Text(
                 '${item.category} • Qty: ${item.quantity} • \$${item.price.toStringAsFixed(2)}'),
             trailing: IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _deleteItem(index),
+              onPressed: () => _deleteItem(_shoppingBox.values.toList().indexOf(item)),
             ),
           );
         },
       ),
+
 
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddItemDialog,
