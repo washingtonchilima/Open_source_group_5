@@ -222,7 +222,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
-                // 🔍 Search field
+                //Search field
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
@@ -235,7 +235,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 ),
                 const SizedBox(height: 8),
 
-                // 🧩 Category filter
+                //Category filter
                 DropdownButton<String>(
                   value: _selectedFilterCategory,
                   items: [
@@ -276,7 +276,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             ),
             title: Text(item.name),
             subtitle: Text(
-                '${item.category} • Qty: ${item.quantity} • \$${item.price.toStringAsFixed(2)}'),
+                '${item.category} • Qty: ${item.quantity} • MWK ${item.price.toStringAsFixed(2)}'),
             trailing: IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _deleteItem(_shoppingBox.values.toList().indexOf(item)),
