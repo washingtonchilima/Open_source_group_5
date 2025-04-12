@@ -177,9 +177,30 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   }
 
   void _deleteItem(int index) {
-    _shoppingBox.getAt(index)?.delete();
-    setState(() {});
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to delete this item?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(), // Cancel
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _shoppingBox.getAt(index)?.delete();
+              Navigator.of(context).pop(); // Close dialog
+              setState(() {});
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
+
 
   void _toggleItem(int index, bool? value) {
     final item = _shoppingBox.getAt(index);
