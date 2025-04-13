@@ -18,9 +18,9 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
     };
     return ShoppingItem(
       name: fields[0] as String,
-      quantity: fields[1] as int,
-      price: fields[2] as double,
-      category: fields[3] as String,
+      category: fields[1] as String,
+      quantity: fields[2] as int,
+      price: fields[3] as double,
       isChecked: fields[4] as bool,
     );
   }
@@ -32,11 +32,11 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
-      ..write(obj.quantity)
-      ..writeByte(2)
-      ..write(obj.price)
-      ..writeByte(3)
       ..write(obj.category)
+      ..writeByte(2)
+      ..write(obj.quantity)
+      ..writeByte(3)
+      ..write(obj.price)
       ..writeByte(4)
       ..write(obj.isChecked);
   }
