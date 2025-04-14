@@ -64,7 +64,7 @@ class _SummaryPageState extends State<SummaryPage> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+                  color: Colors.green,
                 ),
               ),
             ),
