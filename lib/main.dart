@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
 import 'shopping_list_page.dart';
 import 'categories_page.dart';
 import 'summary_page.dart';
@@ -17,7 +19,27 @@ void main() async {
   await Hive.openBox<ShoppingItem>('shopping_items_box');
   await Hive.openBox<String>('categories_box');
 
-  runApp(const MyApp());
+  runApp(
+    ProviderScope(
+      observers: [Logger()],
+      child: const MyApp(),
+    ),
+  );
+}
+
+/// Logger to observe provider changes (useful for debugging)
+class Logger extends ProviderObserver {
+  @override
+  void didUpdateProvider(
+      ProviderBase provider,
+      Object? previousValue,
+      Object? newValue,
+      ProviderContainer container,
+      ) {
+    debugPrint(
+      '[Provider Updated] ${provider.name ?? provider.runtimeType}: $newValue',
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -27,6 +49,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Shopping List App',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
