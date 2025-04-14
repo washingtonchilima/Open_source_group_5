@@ -3,7 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'shopping_list_page.dart';
 import 'categories_page.dart';
 import 'summary_page.dart';
-import 'settings_page.dart';
 import '../models/shopping_item.dart';
 
 void main() async {
@@ -26,6 +25,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Shopping List App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -37,7 +37,6 @@ class MyApp extends StatelessWidget {
         '/shopping-list': (context) => const ShoppingListPage(),
         '/categories': (context) => const CategoriesPage(),
         '/summary': (context) => const SummaryPage(),
-        '/settings': (context) => const SettingsPage(),
       },
     );
   }
@@ -57,7 +56,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     ShoppingListPage(),
     CategoriesPage(),
     SummaryPage(),
-    SettingsPage(),
   ];
 
   @override
@@ -75,7 +73,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           NavigationDestination(icon: Icon(Icons.list), label: 'List'),
           NavigationDestination(icon: Icon(Icons.category), label: 'Categories'),
           NavigationDestination(icon: Icon(Icons.receipt_long), label: 'Summary'),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
         ],
       ),
     );
