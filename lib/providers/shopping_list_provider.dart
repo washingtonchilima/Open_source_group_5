@@ -28,14 +28,14 @@ class ShoppingListNotifier extends StateNotifier<List<ShoppingList>> {
     state = updatedList;
   }
 
-  // 🔢 Get overall total (excluding bought items)
+
   double getOverallTotal(int listIndex) {
     final items = state[listIndex].items;
     return items.fold(0, (sum, item) =>
     item.isBought ? sum : sum + (item.quantity * item.price));
   }
 
-  // 📊 Get category-wise subtotals (excluding bought items)
+
   Map<String, double> getCategorySubtotals(int listIndex) {
     final items = state[listIndex].items;
     final result = <String, double>{};
@@ -49,7 +49,7 @@ class ShoppingListNotifier extends StateNotifier<List<ShoppingList>> {
   }
 }
 
-// 📦 Provider
+
 final shoppingListProvider = StateNotifierProvider<ShoppingListNotifier, List<ShoppingList>>(
       (ref) => ShoppingListNotifier(),
 );

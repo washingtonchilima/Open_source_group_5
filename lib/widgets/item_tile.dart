@@ -5,21 +5,24 @@ import '../providers/shopping_list_provider.dart';
 
 class ItemTile extends ConsumerWidget {
   final Item item;
+  final int listIndex;
 
-  const ItemTile({super.key, required this.item});
+  const ItemTile({super.key, required this.item, required this.listIndex});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final index = ref
-        .watch(shoppingListProvider)
-        .indexWhere((i) => i.name == item.name && i.category == item.category);
+    final shoppingList = ref.watch(shoppingListProvider)[listIndex];
+    final itemIndex = shoppingList.items.indexOf(item);
 
     return CheckboxListTile(
       title: Text(item.name),
       subtitle: Text(
-          '${item.quantity} × \$${item.price.toStringAsFixed(2)} = \$${item.total.toStringAsFixed(2)}'),
+        '${item.quantity} × \$${item.price.toStringAsFixed(2)} = \$${(item.quantity * item.price).toStringAsFixed(2)}',
+      ),
       value: item.isBought,
-      onChanged: (_) => ref.read(shoppingListProvider.notifier).toggleBought(index),
+      onChanged: (_) {
+        ref.read(shoppingListProvider.notifier).toggleItemStatus(listIndex, itemIndex);
+      },
     );
   }
 }
