@@ -10,9 +10,8 @@ class ShoppingListPage extends StatefulWidget {
 }
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
-  late Box<ShoppingItem> _shoppingBox;
-  late Box<String> _categoryBox;
-
+  late final Box<ShoppingItem> _shoppingBox;
+  late final Box<String> _categoryBox;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilterCategory = 'All';
@@ -20,16 +19,23 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   @override
   void initState() {
     super.initState();
+    _initializeHiveBoxes();
+    _setupSearchListener();
+  }
+
+  Future<void> _initializeHiveBoxes() async {
     _shoppingBox = Hive.box<ShoppingItem>('shopping_items_box');
     _categoryBox = Hive.box<String>('categories_box');
 
     if (_categoryBox.isEmpty) {
-      _categoryBox.addAll(['Groceries', 'Electronics', 'Clothing', 'Other']);
+      await _categoryBox.addAll(['Groceries', 'Electronics', 'Clothing', 'Other']);
     }
+  }
 
+  void _setupSearchListener() {
     _searchController.addListener(() {
       setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
+        _searchQuery = _searchController.text.trim().toLowerCase();
       });
     });
   }
@@ -40,160 +46,246 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     super.dispose();
   }
 
-  void _showAddItemDialog() {
+  Future<void> _showAddItemDialog() async {
+    final formKey = GlobalKey<FormState>();
     String itemName = '';
     int quantity = 1;
     double price = 0.0;
-    String selectedCategory =
-    _categoryBox.isNotEmpty ? _categoryBox.getAt(0)! : 'Uncategorized';
+    String selectedCategory = _categoryBox.getAt(0) ?? 'Uncategorized';
 
-    showDialog(
+    await showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Item'),
-          content: SingleChildScrollView(
+      builder: (context) => AlertDialog(
+        title: const Text('Add New Shopping Item'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  decoration: const InputDecoration(labelText: 'Item Name'),
-                  onChanged: (value) => itemName = value,
+                TextFormField(
+                  decoration: const InputDecoration(
+                      labelText: 'Item Name',
+                      hintText: 'Enter item name'
+                  ),
+                  validator: (value) => value?.trim().isEmpty ?? true
+                      ? 'Please enter a name'
+                      : null,
+                  onSaved: (value) => itemName = value?.trim() ?? '',
                 ),
-                TextField(
-                  decoration: const InputDecoration(labelText: 'Quantity'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) => quantity = int.tryParse(value) ?? 1,
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                            labelText: 'Quantity',
+                            hintText: '1'
+                        ),
+                        keyboardType: TextInputType.number,
+                        initialValue: '1',
+                        validator: (value) {
+                          final qty = int.tryParse(value ?? '');
+                          return qty == null || qty <= 0
+                              ? 'Enter valid quantity'
+                              : null;
+                        },
+                        onSaved: (value) => quantity = int.parse(value ?? '1'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                            labelText: 'Price',
+                            hintText: '0.00',
+                            prefixText: 'MWK '
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        initialValue: '0.00',
+                        validator: (value) {
+                          final price = double.tryParse(value ?? '');
+                          return price == null || price < 0
+                              ? 'Enter valid price'
+                              : null;
+                        },
+                        onSaved: (value) => price = double.parse(value ?? '0'),
+                      ),
+                    ),
+                  ],
                 ),
-                TextField(
-                  decoration: const InputDecoration(labelText: 'Price'),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (value) => price = double.tryParse(value) ?? 0.0,
-                ),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
-                  items: _categoryBox.values
-                      .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
-                      .toList(),
+                  items: [
+                    for (final category in _categoryBox.values)
+                      DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      )
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
                   onChanged: (value) {
                     if (value != null) selectedCategory = value;
                   },
-                  decoration: const InputDecoration(labelText: 'Category'),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (itemName.trim().isNotEmpty) {
-                  final item = ShoppingItem(
-                    name: itemName,
-                    category: selectedCategory,
-                    quantity: quantity,
-                    price: price,
-                  );
-                  _shoppingBox.add(item);
-                  Navigator.of(context).pop();
-                  setState(() {});
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                formKey.currentState?.save();
+                final item = ShoppingItem(
+                  name: itemName,
+                  category: selectedCategory,
+                  quantity: quantity,
+                  price: price,
+                );
+                _shoppingBox.add(item);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Add Item'),
+          ),
+        ],
+      ),
     );
   }
 
-  void _showEditItemDialog(ShoppingItem item) {
+  Future<void> _showEditItemDialog(ShoppingItem item) async {
+    final formKey = GlobalKey<FormState>();
     String itemName = item.name;
     int quantity = item.quantity;
     double price = item.price;
     String selectedCategory = item.category;
 
-    showDialog(
+    await showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Item'),
-          content: SingleChildScrollView(
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Shopping Item'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
+                TextFormField(
                   decoration: const InputDecoration(labelText: 'Item Name'),
-                  controller: TextEditingController(text: itemName),
-                  onChanged: (value) => itemName = value,
+                  initialValue: itemName,
+                  validator: (value) => value?.trim().isEmpty ?? true
+                      ? 'Please enter a name'
+                      : null,
+                  onSaved: (value) => itemName = value?.trim() ?? '',
                 ),
-                TextField(
-                  decoration: const InputDecoration(labelText: 'Quantity'),
-                  keyboardType: TextInputType.number,
-                  controller: TextEditingController(text: quantity.toString()),
-                  onChanged: (value) => quantity = int.tryParse(value) ?? 1,
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        decoration: const InputDecoration(labelText: 'Quantity'),
+                        keyboardType: TextInputType.number,
+                        initialValue: quantity.toString(),
+                        validator: (value) {
+                          final qty = int.tryParse(value ?? '');
+                          return qty == null || qty <= 0
+                              ? 'Enter valid quantity'
+                              : null;
+                        },
+                        onSaved: (value) => quantity = int.parse(value ?? '1'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                            labelText: 'Price',
+                            prefixText: 'MWK '
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        initialValue: price.toStringAsFixed(2),
+                        validator: (value) {
+                          final price = double.tryParse(value ?? '');
+                          return price == null || price < 0
+                              ? 'Enter valid price'
+                              : null;
+                        },
+                        onSaved: (value) => price = double.parse(value ?? '0'),
+                      ),
+                    ),
+                  ],
                 ),
-                TextField(
-                  decoration: const InputDecoration(labelText: 'Price'),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  controller: TextEditingController(text: price.toStringAsFixed(2)),
-                  onChanged: (value) => price = double.tryParse(value) ?? 0.0,
-                ),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
-                  items: _categoryBox.values
-                      .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
-                      .toList(),
+                  items: [
+                    for (final category in _categoryBox.values)
+                      DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      )
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
                   onChanged: (value) {
                     if (value != null) selectedCategory = value;
                   },
-                  decoration: const InputDecoration(labelText: 'Category'),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                formKey.currentState?.save();
                 item.name = itemName;
                 item.quantity = quantity;
                 item.price = price;
                 item.category = selectedCategory;
                 item.save();
-                Navigator.of(context).pop();
-                setState(() {});
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save Changes'),
+          ),
+        ],
+      ),
     );
   }
 
-  void _deleteItem(int index) {
-    showDialog(
+  Future<bool?> _confirmDelete(ShoppingItem item) async {
+    return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to delete this item?'),
+        title: const Text('Confirm Deletion'),
+        content: const Text('This item will be permanently removed from your shopping list.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(), // Cancel
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              _shoppingBox.getAt(index)?.delete();
-              Navigator.of(context).pop(); // Close dialog
-              setState(() {});
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -201,14 +293,15 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     );
   }
 
+  void _handleDelete(ShoppingItem item) async {
+    await item.delete();
+    if (mounted) setState(() {});
+  }
 
-  void _toggleItem(int index, bool? value) {
-    final item = _shoppingBox.getAt(index);
-    if (item != null) {
-      item.isChecked = value ?? false;
-      item.save();
-      setState(() {});
-    }
+  void _toggleItemChecked(ShoppingItem item) {
+    item.isChecked = !item.isChecked;
+    item.save();
+    setState(() {});
   }
 
   List<ShoppingItem> _filterItems(List<ShoppingItem> items) {
@@ -224,14 +317,25 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   Widget build(BuildContext context) {
     final items = _shoppingBox.values.toList();
     final filteredItems = _filterItems(items);
+    final totalItems = filteredItems.length;
+    final checkedItems = filteredItems.where((item) => item.isChecked).length;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shopping List'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(90),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
+        actions: [
+          if (checkedItems > 0)
+            Chip(
+              label: Text('$checkedItems/$totalItems'),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 TextField(
@@ -242,64 +346,126 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                        : null,
                   ),
                 ),
-                const SizedBox(height: 8),
-                DropdownButton<String>(
-                  value: _selectedFilterCategory,
-                  items: [
-                    const DropdownMenuItem(value: 'All', child: Text('All Categories')),
-                    ..._categoryBox.values.map((cat) =>
-                        DropdownMenuItem(value: cat, child: Text(cat))),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedFilterCategory = value;
-                      });
-                    }
-                  },
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedFilterCategory,
+                    items: [
+                      const DropdownMenuItem(
+                        value: 'All',
+                        child: Text('All Categories'),
+                      ),
+                      for (final category in _categoryBox.values)
+                        DropdownMenuItem(
+                          value: category,
+                          child: Text(category),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedFilterCategory = value);
+                      }
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Filter by Category',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      ),
-      body: filteredItems.isEmpty
-          ? const Center(child: Text('No items match your search/filter.'))
-          : ListView.builder(
-        itemCount: filteredItems.length,
-        itemBuilder: (context, index) {
-          final item = filteredItems[index];
-          return ListTile(
-            leading: Checkbox(
-              value: item.isChecked,
-              onChanged: (value) => _toggleItem(
-                  _shoppingBox.values.toList().indexOf(item), value),
+          Expanded(
+            child: filteredItems.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.shopping_cart, size: 64),
+                  const SizedBox(height: 16),
+                  Text(
+                    _searchQuery.isEmpty && _selectedFilterCategory == 'All'
+                        ? 'Your shopping list is empty'
+                        : 'No matching items found',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (_searchQuery.isNotEmpty || _selectedFilterCategory != 'All')
+                    TextButton(
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                          _selectedFilterCategory = 'All';
+                        });
+                      },
+                      child: const Text('Clear filters'),
+                    ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              itemCount: filteredItems.length,
+              itemBuilder: (context, index) {
+                final item = filteredItems[index];
+                return Dismissible(
+                  key: Key(item.key.toString()),
+                  background: Container(
+                    color: Theme.of(context).colorScheme.error,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  confirmDismiss: (_) => _confirmDelete(item),
+                  onDismissed: (_) => _handleDelete(item),
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: ListTile(
+                      leading: Checkbox(
+                        value: item.isChecked,
+                        onChanged: (_) => _toggleItemChecked(item),
+                      ),
+                      title: Text(
+                        item.name,
+                        style: item.isChecked
+                            ? TextStyle(
+                          decoration: TextDecoration.lineThrough,
+                          color: Theme.of(context).disabledColor,
+                        )
+                            : null,
+                      ),
+                      subtitle: Text(
+                        '${item.category} • Qty: ${item.quantity} • MWK ${item.price.toStringAsFixed(2)}',
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.edit),
+                        color: Theme.of(context).primaryColor,
+                        onPressed: () => _showEditItemDialog(item),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-            title: Text(item.name),
-            subtitle: Text(
-                '${item.category} • Qty: ${item.quantity} • MWK ${item.price.toStringAsFixed(2)}'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => _showEditItemDialog(item),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _deleteItem(
-                      _shoppingBox.values.toList().indexOf(item)),
-                ),
-              ],
-            ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddItemDialog,
-        tooltip: 'Add Item',
         child: const Icon(Icons.add),
       ),
     );
