@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/shopping_item.dart';
+import '../../models/shopping_item.dart';
 
 class SearchAndFilterList extends StatefulWidget {
   const SearchAndFilterList({super.key});
