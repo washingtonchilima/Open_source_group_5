@@ -13,9 +13,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   late Box<ShoppingItem> _shoppingBox;
   late Box<String> _categoryBox;
 
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  String _selectedFilterCategory = 'All';
+  final TextEditingController _searchController = TextEditingController(); // Controlling the search input.
+  String _searchQuery = ''; // Stores current search query.
+  String _selectedFilterCategory = 'All'; // Stores selected filter category.
 
   @override
   void initState() {
@@ -27,9 +27,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       _categoryBox.addAll(['Groceries', 'Electronics', 'Clothing', 'Other']);
     }
 
+    // search Listener to update search query whenever user types in the search field.
     _searchController.addListener(() {
       setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
+        _searchQuery = _searchController.text.toLowerCase(); // Convert to lowercase for case-insensitive matching.
       });
     });
   }
@@ -66,13 +67,15 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 ),
                 TextField(
                   decoration: const InputDecoration(labelText: 'Price'),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
                   onChanged: (value) => price = double.tryParse(value) ?? 0.0,
                 ),
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
                   items: _categoryBox.values
-                      .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                      .map((cat) =>
+                      DropdownMenuItem(value: cat, child: Text(cat)))
                       .toList(),
                   onChanged: (value) {
                     if (value != null) selectedCategory = value;
@@ -136,14 +139,17 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 ),
                 TextField(
                   decoration: const InputDecoration(labelText: 'Price'),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  controller: TextEditingController(text: price.toStringAsFixed(2)),
+                  keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+                  controller:
+                  TextEditingController(text: price.toStringAsFixed(2)),
                   onChanged: (value) => price = double.tryParse(value) ?? 0.0,
                 ),
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
                   items: _categoryBox.values
-                      .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                      .map((cat) =>
+                      DropdownMenuItem(value: cat, child: Text(cat)))
                       .toList(),
                   onChanged: (value) {
                     if (value != null) selectedCategory = value;
@@ -184,13 +190,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         content: const Text('Are you sure you want to delete this item?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(), // Cancel
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
               _shoppingBox.getAt(index)?.delete();
-              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop();
               setState(() {});
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -200,7 +206,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       ),
     );
   }
-
 
   void _toggleItem(int index, bool? value) {
     final item = _shoppingBox.getAt(index);
@@ -214,16 +219,21 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   List<ShoppingItem> _filterItems(List<ShoppingItem> items) {
     return items.where((item) {
       final matchesSearch = item.name.toLowerCase().contains(_searchQuery);
+      // Checks if item name matches the current search query.
+
       final matchesCategory = _selectedFilterCategory == 'All' ||
           item.category == _selectedFilterCategory;
+      // Checks if item matches the selected category filter (or "All").
+
       return matchesSearch && matchesCategory;
+      // Item must satisfy both search and category filter.
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = _shoppingBox.values.toList();
-    final filteredItems = _filterItems(items);
+    final items = _shoppingBox.values.toList(); // Get all items.
+    final filteredItems = _filterItems(items); // Apply search and filter.
 
     return Scaffold(
       appBar: AppBar(
@@ -234,6 +244,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
+                // Search bar
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
@@ -245,10 +256,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
+
+                // Category filter dropdown
                 DropdownButton<String>(
                   value: _selectedFilterCategory,
                   items: [
-                    const DropdownMenuItem(value: 'All', child: Text('All Categories')),
+                    const DropdownMenuItem(
+                        value: 'All', child: Text('All Categories')),
                     ..._categoryBox.values.map((cat) =>
                         DropdownMenuItem(value: cat, child: Text(cat))),
                   ],
@@ -256,6 +270,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                     if (value != null) {
                       setState(() {
                         _selectedFilterCategory = value;
+                        // Update selected category and rebuild with filtered items.
                       });
                     }
                   },
