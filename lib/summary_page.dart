@@ -34,7 +34,7 @@ class _SummaryPageState extends State<SummaryPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: checkedItems.isEmpty
-            ? const Center(child: Text('No items marked as purchased.'))
+            ? const Center(child: Text('No item marked as purchased.'))
             : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -51,7 +51,7 @@ class _SummaryPageState extends State<SummaryPage> {
                   return ListTile(
                     title: Text(item.name),
                     subtitle: Text('${item.category} • Qty: ${item.quantity}'),
-                    trailing: Text('MWK ${(item.price * item.quantity).toStringAsFixed(2)}'),
+                    trailing: Text(' MWK ${(item.price * item.quantity).toStringAsFixed(2)}'),
                   );
                 },
               ),
