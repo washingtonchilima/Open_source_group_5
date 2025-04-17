@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/shopping_item.dart';
 
-
 class SummaryPage extends StatefulWidget {
   const SummaryPage({super.key});
 
@@ -19,17 +18,40 @@ class _SummaryPageState extends State<SummaryPage> {
     _shoppingBox = Hive.box<ShoppingItem>('shopping_items_box');
   }
 
+  void _clearPurchasedItems() {
+    final checkedItems = _shoppingBox.values.where((item) => item.isChecked).toList();
+    for (var item in checkedItems) {
+      final key = item.key;
+      _shoppingBox.put(
+        key,
+        ShoppingItem(
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          category: item.category,
+          isChecked: false, // uncheck instead of delete
+        ),
+      );
+    }
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get all checked items
     final checkedItems = _shoppingBox.values.where((item) => item.isChecked).toList();
-
-    // Calculate total cost
     final totalCost = checkedItems.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Summary'),
+        actions: [
+          if (checkedItems.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear_all),
+              tooltip: 'Clear Summary',
+              onPressed: _clearPurchasedItems,
+            ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -73,4 +95,3 @@ class _SummaryPageState extends State<SummaryPage> {
       ),
     );
   }
-}
