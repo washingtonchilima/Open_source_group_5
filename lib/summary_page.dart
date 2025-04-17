@@ -42,7 +42,7 @@ class _SummaryPageState extends State<SummaryPage> {
               'Purchased Items (${checkedItems.length})',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 13),
             Expanded(
               child: ListView.builder(
                 itemCount: checkedItems.length,
