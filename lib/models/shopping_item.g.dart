@@ -2,10 +2,6 @@
 
 part of 'shopping_item.dart';
 
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
-
 class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
   @override
   final int typeId = 0;
