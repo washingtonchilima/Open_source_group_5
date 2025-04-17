@@ -79,7 +79,7 @@ class _SummaryPageState extends State<SummaryPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: checkedItems.isEmpty
-            ? const Center(child: Text('No item marked as purchased.'))
+            ? const Center(child: Text('You haven’t marked any items as purchased yet.'))
             : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
