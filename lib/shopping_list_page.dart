@@ -291,6 +291,33 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     item.save();
     setState(() {});
   }
+  void _selectAll(List<ShoppingItem> items) {
+    for (var item in items) {
+      if (!item.isChecked) {
+        item.isChecked = true;
+        item.save();
+      }
+    }
+    setState(() {});
+  }
+
+  void _deselectAll(List<ShoppingItem> items) {
+    for (var item in items) {
+      if (item.isChecked) {
+        item.isChecked = false;
+        item.save();
+      }
+    }
+    setState(() {});
+  }
+
+  void _deleteSelected(List<ShoppingItem> items) async {
+    for (var item in items.where((i) => i.isChecked)) {
+      await item.delete();
+    }
+    setState(() {});
+  }
+
 
   List<ShoppingItem> _filterItems(List<ShoppingItem> items) {
     return items.where((item) {
@@ -313,15 +340,31 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         title: const Text('Shopping List'),
         actions: [
           if (checkedItems > 0)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Chip(
-                label: Text('$checkedItems/$totalItems'),
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              tooltip: 'Delete Selected',
+              onPressed: () => _deleteSelected(filteredItems),
             ),
+          IconButton(
+            icon: const Icon(Icons.select_all),
+            tooltip: 'Select All',
+            onPressed: () => _selectAll(filteredItems),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_done),
+            tooltip: 'Deselect All',
+            onPressed: () => _deselectAll(filteredItems),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Chip(
+              label: Text('$checkedItems/$totalItems'),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            ),
+          ),
         ],
       ),
+
       body: Column(
         children: [
           Padding(
