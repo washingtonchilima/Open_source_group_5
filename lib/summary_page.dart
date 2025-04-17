@@ -18,7 +18,21 @@ class _SummaryPageState extends State<SummaryPage> {
     _shoppingBox = Hive.box<ShoppingItem>('shopping_items_box');
   }
 
-  void _clearPurchasedItems() {
+  void _clearPurchasedItems() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Uncheck all items?'),
+        content: const Text('Are you sure you want to uncheck all purchased items?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     final checkedItems = _shoppingBox.values.where((item) => item.isChecked).toList();
     for (var item in checkedItems) {
       final key = item.key;
@@ -29,12 +43,13 @@ class _SummaryPageState extends State<SummaryPage> {
           quantity: item.quantity,
           price: item.price,
           category: item.category,
-          isChecked: false, // uncheck instead of delete
+          isChecked: false,
         ),
       );
     }
     setState(() {});
   }
+
 
   void _selectAllPurchasedItems() {
     final uncheckedItems = _shoppingBox.values.where((item) => !item.isChecked).toList();
