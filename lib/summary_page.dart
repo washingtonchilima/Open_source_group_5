@@ -54,7 +54,32 @@ class _SummaryPageState extends State<SummaryPage> {
             IconButton(
               icon: const Icon(Icons.clear_all),
               tooltip: 'Clear Summary',
-              onPressed: _clearPurchasedItems,
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Clear Summary?'),
+                    content: const Text(
+                      'Are you sure you want to clear these purchased items?\n'
+                          'This will reset them for the next shopping round.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Yes, Clear'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  _clearPurchasedItems();
+                }
+              },
             ),
         ],
       ),
@@ -67,7 +92,8 @@ class _SummaryPageState extends State<SummaryPage> {
           children: [
             Text(
               'Purchased Items (${checkedItems.length})',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -77,10 +103,11 @@ class _SummaryPageState extends State<SummaryPage> {
                   final item = checkedItems[index];
                   return ListTile(
                     title: Text(item.name),
-                    subtitle: Text('${item.category} • Qty: ${item.quantity}'),
+                    subtitle:
+                    Text('${item.category} • Qty: ${item.quantity}'),
                     trailing: Text(
-                        ' MWK ${(item.price * item.quantity).toStringAsFixed(
-                            2)}'),
+                      ' MWK ${(item.price * item.quantity).toStringAsFixed(2)}',
+                    ),
                   );
                 },
               ),
